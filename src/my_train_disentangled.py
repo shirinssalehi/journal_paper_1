@@ -104,10 +104,10 @@ def train(args, model, loss_fn, m_optim, m_scheduler, adv_optim, adv_scheduler, 
                 else:
                     raise ValueError('Task must be `ranking` or `classification`.')
             if args.task == 'ranking':
-                batch_loss = loss_fn(batch_score_pos.tanh(), batch_score_neg.tanh(), torch.ones(batch_score_pos.size()).to(device))
-                # ranking_loss = bias_regularized_margin_ranking_loss(batch_score_pos.tanh(), batch_score_neg.tanh(),
-                #                                                   args.regularizer,
-                #                                                   train_batch["bias_neg"].to(device))
+                # batch_loss = loss_fn(batch_score_pos.tanh(), batch_score_neg.tanh(), torch.ones(batch_score_pos.size()).to(device))
+                batch_loss = bias_regularized_margin_ranking_loss(batch_score_pos.tanh(), batch_score_neg.tanh(),
+                                                                  args.regularizer,
+                                                                  train_batch["bias_neg"].to(device))
                 # loss_attribute                
                 # attribute_loss_pos = loss_attribute(F.sigmoid(attribute_pos), train_batch["attribute_pos"].to(device))
                 # print(attribute_loss_pos)
@@ -444,15 +444,13 @@ def main():
             raise ValueError('Task must be `ranking` or `classification`.')
         
     # define the optimizers
-    # m_parameters = list(model._model.parameters()) + list(model._ranking.parameters()) + list(model._attribute.parameters())
-    m_parameters = [{'params': p for p in model._model.parameters()},
-                    {'params': p for p in model._ranking.parameters()},
-                    {'params': p for p in model._attribute.parameters()}]
-    m_optim = torch.optim.Adam(m_parameters, lr=args.lr)
+    m_parameters = [p for p in model._model.parameters()]+[p for p in model._ranking.parameters()]+[p for p in model._attribute.parameters()]
+    # m_optim = torch.optim.Adam(m_parameters, lr=args.lr)
+    m_optim = torch.optim.Adam(filter(lambda p: p.requires_grad, m_parameters), lr=args.lr)
     m_scheduler = get_linear_schedule_with_warmup(m_optim, num_warmup_steps=args.n_warmup_steps, num_training_steps=len(train_set)*args.epoch//args.batch_size)
     # adv_parameters = list(model._adv_attribute.parameters())
-    adv_parameters = [{'params': p for p in model._adv_attribute.parameters()}]
-    adv_optim = torch.optim.Adam(adv_parameters, lr=args.lr)
+    adv_parameters = [p for p in model._adv_attribute.parameters()]
+    adv_optim = torch.optim.Adam(filter(lambda p: p.requires_grad, adv_parameters), lr=args.lr)
     adv_scheduler = get_linear_schedule_with_warmup(adv_optim, num_warmup_steps=args.n_warmup_steps, num_training_steps=len(train_set)*args.epoch//args.batch_size)
     if args.reinfoselect:
         p_optim = torch.optim.Adam(filter(lambda p: p.requires_grad, policy.parameters()), lr=args.lr)
