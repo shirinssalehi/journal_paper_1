@@ -20,7 +20,7 @@ def test(args, model, test_loader, device):
         with torch.no_grad():
             if args.model == 'bert':
                 batch_score, pred_attribute, pred_attribute_adv = model(test_batch['input_ids'].to(device), test_batch['input_mask'].to(device), test_batch['segment_ids'].to(device))
-                print(len(batch_score))
+                # print(len(batch_score))
             elif args.model == 'roberta':
                 batch_score, _ = model(test_batch['input_ids'].to(device), test_batch['input_mask'].to(device))
             elif args.model == 'edrm':

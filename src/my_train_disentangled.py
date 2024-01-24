@@ -110,17 +110,18 @@ def train(args, model, loss_fn, m_optim, m_scheduler, adv_optim, adv_scheduler, 
                                                                   train_batch["bias_neg"].to(device))
                 # loss_attribute                
                 attribute_loss_pos = loss_attribute(F.sigmoid(attribute_pos), train_batch["attribute_pos"].to(device))
-                # print(attribute_loss_pos)
                 attribute_loss_neg = loss_attribute(F.sigmoid(attribute_neg), train_batch["attribute_neg"].to(device))
 
                 # loss_adv
                 batch_loss_adv_pos = loss_adv(F.sigmoid(adv_attribute_pos), train_batch["attribute_pos"].to(device))
                 batch_loss_adv_neg = loss_adv(F.sigmoid(adv_attribute_neg), train_batch["attribute_neg"].to(device))
+
                 # entropy_loss
-                # hloss_pos = entropy_loss(F.sigmoid(adv_attribute_pos))
-                # hloss_neg = entropy_loss(F.sigmoid(adv_attribute_neg))
+                hloss_pos = entropy_loss(F.sigmoid(adv_attribute_pos))
+                hloss_neg = entropy_loss(F.sigmoid(adv_attribute_neg))
+
                 # total losses
-                batch_loss = ranking_loss + attribute_loss_pos + attribute_loss_neg # + 0.001 * hloss_pos + 0.001 * hloss_neg
+                batch_loss = ranking_loss + attribute_loss_pos + attribute_loss_neg + 0.001 * hloss_pos + 0.001 * hloss_neg
                 batch_loss_adv = batch_loss_adv_pos + batch_loss_adv_neg
 
             elif args.task == 'classification':
