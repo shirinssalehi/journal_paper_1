@@ -113,16 +113,16 @@ def train(args, model, loss_fn, m_optim, m_scheduler, adv_optim, adv_scheduler, 
                 attribute_loss_neg = loss_attribute(F.sigmoid(attribute_neg), train_batch["attribute_neg"].to(device))
 
                 # loss_adv
-                # batch_loss_adv_pos = loss_adv(F.sigmoid(adv_attribute_pos), train_batch["attribute_pos"].to(device))
-                # batch_loss_adv_neg = loss_adv(F.sigmoid(adv_attribute_neg), train_batch["attribute_neg"].to(device))
+                batch_loss_adv_pos = loss_adv(F.sigmoid(adv_attribute_pos), train_batch["attribute_pos"].to(device))
+                batch_loss_adv_neg = loss_adv(F.sigmoid(adv_attribute_neg), train_batch["attribute_neg"].to(device))
 
                 # entropy_loss
-                # hloss_pos = entropy_loss(F.sigmoid(adv_attribute_pos))
-                # hloss_neg = entropy_loss(F.sigmoid(adv_attribute_neg))
+                hloss_pos = entropy_loss(F.sigmoid(adv_attribute_pos))
+                hloss_neg = entropy_loss(F.sigmoid(adv_attribute_neg))
 
                 # total losses
-                batch_loss = ranking_loss + attribute_loss_pos + attribute_loss_neg # + 0.001 * hloss_pos + 0.001 * hloss_neg
-                # batch_loss_adv = batch_loss_adv_pos + batch_loss_adv_neg
+                batch_loss = ranking_loss + attribute_loss_pos + attribute_loss_neg + 0.001 * hloss_pos + 0.001 * hloss_neg
+                batch_loss_adv = batch_loss_adv_pos + batch_loss_adv_neg
 
             elif args.task == 'classification':
                 batch_loss = loss_fn(batch_score, train_batch['label'].to(device))
@@ -132,10 +132,10 @@ def train(args, model, loss_fn, m_optim, m_scheduler, adv_optim, adv_scheduler, 
                 batch_loss = batch_loss.mean()
             avg_loss += batch_loss.item()
 
-            # batch_loss_adv.backward(retain_graph=True)
-            # adv_optim.step()
-            # adv_scheduler.step()
-            # adv_optim.zero_grad()
+            batch_loss_adv.backward(retain_graph=True)
+            adv_optim.step()
+            adv_scheduler.step()
+            adv_optim.zero_grad()
 
             batch_loss.backward()
             m_optim.step()
