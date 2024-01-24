@@ -23,11 +23,11 @@ class Bert(nn.Module):
         self.ranking_size = self._config.hidden_size - self.attribute_size
 
         if self._task == 'ranking':
-            
-            self._dense = nn.Linear(self.ranking_size, 1)
+            self._ranking = nn.Linear(self.ranking_size, 1)
             self._attribute = nn.Linear(self.attribute_size, 1)
+            self._adv_attribute = nn.Linear(self.ranking_size, 1)
         elif self._task == 'classification':
-            self._dense = nn.Linear(self._config.hidden_size, 2)
+            self._ranking = nn.Linear(self._config.hidden_size, 2)
         else:
             raise ValueError('Task must be `ranking` or `classification`.')
 
@@ -40,6 +40,7 @@ class Bert(nn.Module):
             logits = output[1]
         else:
             raise ValueError('Mode must be `cls` or `pooling`.')
-        ranking_score = self._dense(ranking_logits).squeeze(-1)
+        ranking_score = self._ranking(ranking_logits).squeeze(-1)
         attribute_score = self._attribute(attribute_logits).squeeze(-1)
-        return ranking_score, attribute_score, logits
+        adv_attribute_score = self._adv_attribute(ranking_logits).squeeze(-1)
+        return ranking_score, attribute_score, adv_attribute_score

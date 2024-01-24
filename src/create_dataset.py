@@ -67,6 +67,44 @@ def create_train_data_bias_disentanglement(msmarco_triple_path, bias_dataset_sav
                 break
         writer.writerows(dataset_bias)
 
+def create_train_data_penalty_disentanglement(msmarco_triple_path, bias_dataset_savepath, bias_meter):
+    data_folder = '/home/ir-bias/Shirin/msmarco/data/'
+    # queries
+    print("reading the queries")
+    queries = {}
+    queries_filepath = os.path.join(data_folder, 'queries.train.tsv')
+    with open(queries_filepath, 'r', encoding='utf8') as fIn:
+        for line in fIn:
+            qid, query = line.strip().split("\t")
+            queries[qid] = query
+    # corpus
+    print("reading the corpus")
+    corpus = {}
+    collection_filepath = os.path.join(data_folder, 'collection.tsv')
+    with open(collection_filepath, 'r', encoding='utf8') as fIn:
+        for line in fIn:
+            pid, passage = line.strip().split("\t")
+            corpus[pid] = passage
+    # calculate bias
+    print("start generating the data")
+    with open(msmarco_triple_path, 'r') as msmarco_dataset,\
+         open(bias_dataset_savepath, 'w') as my_dataset:
+        dataset_bias = []
+        writer = csv.writer(my_dataset, delimiter='\t')
+        for n, line in enumerate(tqdm(msmarco_dataset)):
+            # print("sample {}".format(n))
+            if n%1e6 ==0:
+                print("line number: ", n)
+            qid, pos_id, neg_id, gender_pos, gender_neg = line.strip().split()
+            query = queries[qid]
+            doc_pos = corpus[pos_id]
+            doc_neg = corpus[neg_id]
+            bias_negative = bias_meter.get_bias(bias_meter.get_tokens(doc_neg))
+            dataset_bias.append([query, doc_pos, doc_neg, abs(bias_negative[0]), gender_pos, gender_neg])
+            if len(dataset_bias) == 6e6:
+                break
+        writer.writerows(dataset_bias)
+
 #
 # def create_train_data_refinement(msmarco_triple_id_path, msmarco_collection_path,
 #                                  msmarco_queries_path,
@@ -116,9 +154,9 @@ if __name__ == "__main__":
     bias_meter = DocBias(gendered_vocab_path)
     #
     msmarco_triple_path = "/home/ir-bias/Shirin/gender_disentanglement/data/balanced_triples_genderlabelled_passage_label.tsv"
-    bias_dataset_savepath = "../data/bias_dataset_disentanglement_3M.tsv"
+    bias_dataset_savepath = "../data/bias_dataset_penalty+disentanglement_6M.tsv"
     print("start")
-    create_train_data_bias_disentanglement(msmarco_triple_path, bias_dataset_savepath, bias_meter)
+    create_train_data_penalty_disentanglement(msmarco_triple_path, bias_dataset_savepath, bias_meter)
     # msmarco_triple_id_path = "./data/qidpidtriples.train.full.2.tsv"
     # msmarco_collection_path = "./data/collection.tsv"
     # msmarco_queries_path = "./data/queries.train.tsv"

@@ -9,11 +9,12 @@ from torch.distributions import Categorical
 
 from transformers import AutoTokenizer, get_linear_schedule_with_warmup
 import OpenMatch as om
-
+from OpenMatch.models.bert_disentangled import Bert
 from OpenMatch.data.datasets.my_dataset_bias import Dataset
 from OpenMatch.data.datasets.my_bert_dataset_disentangled import BertDataset
 from OpenMatch.data.datasets.my_roberta_dataset_bias import RobertaDataset
 from regularized_loss import bias_regularized_margin_ranking_loss
+from entropy_loss import entropy_loss
 
 
 def dev(args, model, metric, dev_loader, device):
@@ -22,7 +23,7 @@ def dev(args, model, metric, dev_loader, device):
         query_id, doc_id, label, retrieval_score = dev_batch['query_id'], dev_batch['doc_id'], dev_batch['label'], dev_batch['retrieval_score']
         with torch.no_grad():
             if args.model == 'bert':
-                batch_score, _ = model(dev_batch['input_ids'].to(device), dev_batch['input_mask'].to(device), dev_batch['segment_ids'].to(device))
+                batch_score, _, _ = model(dev_batch['input_ids'].to(device), dev_batch['input_mask'].to(device), dev_batch['segment_ids'].to(device))
             elif args.model == 'roberta':
                 batch_score, _ = model(dev_batch['input_ids'].to(device), dev_batch['input_mask'].to(device))
             elif args.model == 'edrm':
@@ -45,8 +46,11 @@ def dev(args, model, metric, dev_loader, device):
     return rst_dict
 
 
-def train(args, model, loss_fn, m_optim, m_scheduler, metric, train_loader, dev_loader, device):
+def train(args, model, loss_fn, m_optim, m_scheduler, adv_optim, adv_scheduler, metric, train_loader, dev_loader, device):
     best_mes = 0.0
+    # loss_attribute = nn.BCELoss().to(device)
+    # loss_adv = nn.BCELoss().to(device)
+    # torch.autograd.set_detect_anomaly(True)
     for epoch in range(args.epoch):
         avg_loss = 0.0
         # data_iter = iter(train_loader)
@@ -54,16 +58,16 @@ def train(args, model, loss_fn, m_optim, m_scheduler, metric, train_loader, dev_
         for step, train_batch in enumerate(tqdm(train_loader)):
             if args.model == 'bert':
                 if args.task == 'ranking':
-                    batch_score_pos, _ = model(train_batch['input_ids_pos'].to(device), train_batch['input_mask_pos'].to(device), train_batch['segment_ids_pos'].to(device))
-                    batch_score_neg, _ = model(train_batch['input_ids_neg'].to(device), train_batch['input_mask_neg'].to(device), train_batch['segment_ids_neg'].to(device))
+                    batch_score_pos, attribute_pos, adv_attribute_pos = model(train_batch['input_ids_pos'].to(device), train_batch['input_mask_pos'].to(device), train_batch['segment_ids_pos'].to(device))
+                    batch_score_neg, attribute_neg, adv_attribute_neg = model(train_batch['input_ids_neg'].to(device), train_batch['input_mask_neg'].to(device), train_batch['segment_ids_neg'].to(device))
                 elif args.task == 'classification':
                     batch_score, _ = model(train_batch['input_ids'].to(device), train_batch['input_mask'].to(device), train_batch['segment_ids'].to(device))
                 else:
                     raise ValueError('Task must be `ranking` or `classification`.')
             elif args.model == 'roberta':
                 if args.task == 'ranking':
-                    batch_score_pos, _ = model(train_batch['input_ids_pos'].to(device), train_batch['input_mask_pos'].to(device))
-                    batch_score_neg, _ = model(train_batch['input_ids_neg'].to(device), train_batch['input_mask_neg'].to(device))
+                    batch_score_pos, attribute_pos, adv_attribute_pos = model(train_batch['input_ids_pos'].to(device), train_batch['input_mask_pos'].to(device))
+                    batch_score_neg, attribute_neg, adv_attribute_neg = model(train_batch['input_ids_neg'].to(device), train_batch['input_mask_neg'].to(device))
                 elif args.task == 'classification':
                     batch_score, _ = model(train_batch['input_ids'].to(device), train_batch['input_mask'].to(device))
                 else:
@@ -90,9 +94,9 @@ def train(args, model, loss_fn, m_optim, m_scheduler, metric, train_loader, dev_
                     raise ValueError('Task must be `ranking` or `classification`.')
             else:
                 if args.task == 'ranking':
-                    batch_score_pos, _ = model(train_batch['query_idx'].to(device), train_batch['query_mask'].to(device),
+                    batch_score_pos, attribute_pos, adv_attribute_pos = model(train_batch['query_idx'].to(device), train_batch['query_mask'].to(device),
                                                train_batch['doc_pos_idx'].to(device), train_batch['doc_pos_mask'].to(device))
-                    batch_score_neg, _ = model(train_batch['query_idx'].to(device), train_batch['query_mask'].to(device),
+                    batch_score_neg, attribute_neg, adv_attribute_neg = model(train_batch['query_idx'].to(device), train_batch['query_mask'].to(device),
                                                train_batch['doc_neg_idx'].to(device), train_batch['doc_neg_mask'].to(device))
                 elif args.task == 'classification':
                     batch_score, _ = model(train_batch['query_idx'].to(device), train_batch['query_mask'].to(device),
@@ -100,10 +104,25 @@ def train(args, model, loss_fn, m_optim, m_scheduler, metric, train_loader, dev_
                 else:
                     raise ValueError('Task must be `ranking` or `classification`.')
             if args.task == 'ranking':
-                # batch_loss = loss_fn(batch_score_pos.tanh(), batch_score_neg.tanh(), torch.ones(batch_score_pos.size()).to(device))
-                batch_loss = bias_regularized_margin_ranking_loss(batch_score_pos.tanh(), batch_score_neg.tanh(),
-                                                                  args.regularizer,
-                                                                  train_batch["bias_neg"].to(device))
+                batch_loss = loss_fn(batch_score_pos.tanh(), batch_score_neg.tanh(), torch.ones(batch_score_pos.size()).to(device))
+                # ranking_loss = bias_regularized_margin_ranking_loss(batch_score_pos.tanh(), batch_score_neg.tanh(),
+                #                                                   args.regularizer,
+                #                                                   train_batch["bias_neg"].to(device))
+                # loss_attribute                
+                # attribute_loss_pos = loss_attribute(F.sigmoid(attribute_pos), train_batch["attribute_pos"].to(device))
+                # print(attribute_loss_pos)
+                # attribute_loss_neg = loss_attribute(F.sigmoid(attribute_neg), train_batch["attribute_neg"].to(device))
+
+                # loss_adv
+                # batch_loss_adv_pos = loss_adv(F.sigmoid(adv_attribute_pos), train_batch["attribute_pos"].to(device))
+                # batch_loss_adv_neg = loss_adv(F.sigmoid(adv_attribute_neg), train_batch["attribute_neg"].to(device))
+                # entropy_loss
+                # hloss_pos = entropy_loss(F.sigmoid(adv_attribute_pos))
+                # hloss_neg = entropy_loss(F.sigmoid(adv_attribute_neg))
+                # total losses
+                # batch_loss = ranking_loss + attribute_loss_pos + attribute_loss_neg + 0.001 * hloss_pos + 0.001 * hloss_neg
+                # batch_loss_adv = batch_loss_adv_pos + batch_loss_adv_neg
+
             elif args.task == 'classification':
                 batch_loss = loss_fn(batch_score, train_batch['label'].to(device))
             else:
@@ -111,6 +130,12 @@ def train(args, model, loss_fn, m_optim, m_scheduler, metric, train_loader, dev_
             if torch.cuda.device_count() > 1:
                 batch_loss = batch_loss.mean()
             avg_loss += batch_loss.item()
+
+            # batch_loss_adv.backward(retain_graph=True)
+            # adv_optim.step()
+            # adv_scheduler.step()
+            # adv_optim.zero_grad()
+
             batch_loss.backward()
             m_optim.step()
             m_scheduler.step()
@@ -154,17 +179,20 @@ def main():
     parser.add_argument('-metric', type=str, default='ndcg_cut_10')
     parser.add_argument('-mode', type=str, default='cls')
     parser.add_argument('-n_kernels', type=int, default=21)
-    parser.add_argument('-max_query_len', type=int, default=20)
-    parser.add_argument('-max_doc_len', type=int, default=150)
+    parser.add_argument('-max_query_len', type=int, default=32)
+    parser.add_argument('-max_doc_len', type=int, default=221)
     parser.add_argument('-maxp', action='store_true', default=False)
     parser.add_argument('-epoch', type=int, default=1)
     parser.add_argument('-batch_size', type=int, default=8)
-    parser.add_argument('-lr', type=float, default=2e-5)
+    parser.add_argument('-lr', type=float, default=3e-6)
     parser.add_argument('-tau', type=float, default=1)
-    parser.add_argument('-n_warmup_steps', type=int, default=1000)
-    parser.add_argument('-eval_every', type=int, default=1000)
+    parser.add_argument('-n_warmup_steps', type=int, default=16000)
+    parser.add_argument('-eval_every', type=int, default=10000)
     parser.add_argument('-regularizer', type=float, default=1)
-    # sys.argv = ["train.py", "-model", "knrm", "-max_input", "128"]
+    # sys.argv = ["my_train_disentangled.py", "-task", "ranking", "-model", "bert", "-train", "/home/ir-bias/Shirin/journal_paper_1/data/bias_dataset_penalty+disentanglement_6M.tsv",
+    #             "-dev", "/home/ir-bias/Shirin/journal_paper_1/data/dev.100.jsonl", "-save", "/home/ir-bias/Shirin/journal_paper_1/checkpoints/penalty_disentanglement/", "-qrels", "/home/ir-bias/Shirin/journal_paper_1/runs/qrels.dev.tsv",
+    #             "-vocab", "sentence-transformers/msmarco-MiniLM-L6-cos-v5", "-pretrain", "sentence-transformers/msmarco-MiniLM-L6-cos-v5", "-res", "/home/shirin/journal_paper_1/results/penalty_disentanglement/6M_minilm.trec",
+    #             "-metric", "mrr_cut_10", "-batch_size", "16", "-max_input", "100"]
     args = parser.parse_args()
 
     args.model = args.model.lower()
@@ -314,7 +342,7 @@ def main():
                 task=args.task
             )
         else:
-            model = om.models.Bert(
+            model = Bert(
                 pretrained=args.pretrain,
                 mode=args.mode,
                 task=args.task
@@ -414,8 +442,18 @@ def main():
             loss_fn = nn.CrossEntropyLoss()
         else:
             raise ValueError('Task must be `ranking` or `classification`.')
-    m_optim = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=args.lr)
+        
+    # define the optimizers
+    # m_parameters = list(model._model.parameters()) + list(model._ranking.parameters()) + list(model._attribute.parameters())
+    m_parameters = [{'params': p for p in model._model.parameters()},
+                    {'params': p for p in model._ranking.parameters()},
+                    {'params': p for p in model._attribute.parameters()}]
+    m_optim = torch.optim.Adam(m_parameters, lr=args.lr)
     m_scheduler = get_linear_schedule_with_warmup(m_optim, num_warmup_steps=args.n_warmup_steps, num_training_steps=len(train_set)*args.epoch//args.batch_size)
+    # adv_parameters = list(model._adv_attribute.parameters())
+    adv_parameters = [{'params': p for p in model._adv_attribute.parameters()}]
+    adv_optim = torch.optim.Adam(adv_parameters, lr=args.lr)
+    adv_scheduler = get_linear_schedule_with_warmup(adv_optim, num_warmup_steps=args.n_warmup_steps, num_training_steps=len(train_set)*args.epoch//args.batch_size)
     if args.reinfoselect:
         p_optim = torch.optim.Adam(filter(lambda p: p.requires_grad, policy.parameters()), lr=args.lr)
     metric = om.metrics.Metric()
@@ -434,7 +472,7 @@ def main():
         time1 = time.time()
         print("start training")
         print("regularizer: ", args.regularizer)
-        train(args, model, loss_fn, m_optim, m_scheduler, metric, train_loader, dev_loader, device)
+        train(args, model, loss_fn, m_optim, m_scheduler, adv_optim, adv_scheduler, metric, train_loader, dev_loader, device)
         time2 = time.time()
         print("training time = {}".format(time2-time1))
 

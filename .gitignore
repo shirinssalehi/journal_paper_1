@@ -4,4 +4,10 @@ reranked/
 resources/
 results/
 runs/
-
+src/__pycache__/
+src/OpenMatch/modules/matchers/__pycache__/
+src/OpenMatch/__pycache__/
+src/OpenMatch/extractors/__pycache__/
+src/OpenMatch/metrics/__pycache__/
+src/OpenMatch/models/__pycache__/
+src/OpenMatch/modules/__pycache__/
