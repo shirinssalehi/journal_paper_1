@@ -108,10 +108,10 @@ def train(args, model, loss_fn, m_optim, m_scheduler, adv_optim, adv_scheduler, 
                 else:
                     raise ValueError('Task must be `ranking` or `classification`.')
             if args.task == 'ranking':
-                batch_loss = loss_fn(batch_score_pos.tanh(), batch_score_neg.tanh(), torch.ones(batch_score_pos.size()).to(device))
-                # ranking_loss = bias_regularized_margin_ranking_loss(batch_score_pos.tanh(), batch_score_neg.tanh(),
-                                                                #   args.regularizer,
-                                                                #   train_batch["bias_neg"].to(device))
+                # batch_loss = loss_fn(batch_score_pos.tanh(), batch_score_neg.tanh(), torch.ones(batch_score_pos.size()).to(device))
+                batch_loss = bias_regularized_margin_ranking_loss(batch_score_pos.tanh(), batch_score_neg.tanh(),
+                                                                  args.regularizer,
+                                                                  train_batch["bias_neg"].to(device))
                 # # loss_attribute                
                 # attribute_loss_pos = loss_attribute(torch.sigmoid(attribute_pos), train_batch["attribute_pos"].to(device))
                 # attribute_loss_neg = loss_attribute(torch.sigmoid(attribute_neg), train_batch["attribute_neg"].to(device))
