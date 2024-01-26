@@ -108,13 +108,13 @@ def train(args, model, loss_fn, m_optim, m_scheduler, adv_optim, adv_scheduler, 
                 else:
                     raise ValueError('Task must be `ranking` or `classification`.')
             if args.task == 'ranking':
-                # batch_loss = loss_fn(batch_score_pos.tanh(), batch_score_neg.tanh(), torch.ones(batch_score_pos.size()).to(device))
-                batch_loss = bias_regularized_margin_ranking_loss(batch_score_pos.tanh(), batch_score_neg.tanh(),
-                                                                  args.regularizer,
-                                                                  train_batch["bias_neg"].to(device))
-                # # loss_attribute                
-                # attribute_loss_pos = loss_attribute(torch.sigmoid(attribute_pos), train_batch["attribute_pos"].to(device))
-                # attribute_loss_neg = loss_attribute(torch.sigmoid(attribute_neg), train_batch["attribute_neg"].to(device))
+                ranking_loss = loss_fn(batch_score_pos.tanh(), batch_score_neg.tanh(), torch.ones(batch_score_pos.size()).to(device))
+                # batch_loss = bias_regularized_margin_ranking_loss(batch_score_pos.tanh(), batch_score_neg.tanh(),
+                #                                                   args.regularizer,
+                #                                                   train_batch["bias_neg"].to(device))
+                # loss_attribute                
+                attribute_loss_pos = loss_attribute(torch.sigmoid(attribute_pos), train_batch["attribute_pos"].to(device))
+                attribute_loss_neg = loss_attribute(torch.sigmoid(attribute_neg), train_batch["attribute_neg"].to(device))
 
                 # # loss_adv
                 # batch_loss_adv_pos = loss_adv(torch.sigmoid(adv_attribute_pos), train_batch["attribute_pos"].to(device))
@@ -124,8 +124,8 @@ def train(args, model, loss_fn, m_optim, m_scheduler, adv_optim, adv_scheduler, 
                 # hloss_pos = entropy_loss(torch.sigmoid(adv_attribute_pos))
                 # hloss_neg = entropy_loss(torch.sigmoid(adv_attribute_neg))
 
-                # # total losses
-                # batch_loss = ranking_loss + attribute_loss_pos + attribute_loss_neg + 0.001 * hloss_pos + 0.001 * hloss_neg
+                # total losses
+                batch_loss = ranking_loss + attribute_loss_pos + attribute_loss_neg # + 0.001 * hloss_pos + 0.001 * hloss_neg
                 # batch_loss_adv = batch_loss_adv_pos + batch_loss_adv_neg
 
             elif args.task == 'classification':
