@@ -4,11 +4,11 @@ import pickle
 
 
 experiments = {
-                # 'bert_mini_original': '../reranked/bert_mini_original.trec',
-                'bert_tiny_original': '../reranked/bert_tiny_original.trec',
-                # '1_bert-mini_fairness': '../reranked/215_queries_social_rekabsaz/1_bert-mini_fairness.trec',
-                # '2_bert-tiny_fairness': '../reranked/215_queries_social_rekabsaz/2_bert-tiny_fairness.trec',
-                # '3_bert-mini_fairness': '../reranked/215_queries_social_rekabsaz/3_bert-mini_fairness.trec',
+                'minilm_original_2_5_1M_test': '../reranked/penalty_disentanglement/215_queries/minilm_original_2_5_1M_test.trec',
+                # 'minilm_original_1M_test': '../reranked/penalty_disentanglement/215_queries/minilm_original_1M_test.trec',
+                # 'minilm_penalty_1M_test': '../reranked/penalty_disentanglement/215_queries/minilm_penalty_1M_test.trec',
+                # 'minilm_penalty+attrloss_pos+attrloss_neg_1M_test': '../reranked/penalty_disentanglement/215_queries/minilm_penalty+attrloss_pos+attrloss_neg_1M_test.trec',
+                # 'minilm_penalized+attr+adv_1M_test': '../reranked/penalty_disentanglement/215_queries/minilm_penalized+attr+adv_1M_test.trec',
                 # '4_bert-tiny_fairness': '../reranked/215_queries_social_rekabsaz/4_bert-tiny_fairness.trec',
                 # '5_bert-mini_fairness': '../reranked/215_queries_social_rekabsaz/5_bert-mini_fairness.trec',
                 # '6_bert-tiny_fairness': '../reranked/215_queries_social_rekabsaz/6_bert-tiny_fairness.trec',
@@ -24,7 +24,7 @@ docs_bias_paths = {'tc':"../data/msmarco_passage_docs_bias/msmarco_passage_docs_
                    'bool':"../data/msmarco_passage_docs_bias/msmarco_passage_docs_bias_bool.pkl",
                    }
 
-at_ranklist = [10, 20, 30, 50, 100]
+at_ranklist = [10, 20]
 
 # dictionary of models (experiemnts) with their corresponding path of run files
 # the path of these run files should be set
@@ -140,7 +140,7 @@ print('done!')
 
 for exp_name in experiments:
     for _method in docs_bias_paths:
-        save_path = "../ARaB/215_scietal_rekabsaz/%s_run_bias_%s" % (exp_name, _method)
+        save_path = "../biases/penalty_disentanglement/%s_run_bias_%s" % (exp_name, _method)
 
         print (save_path)
 

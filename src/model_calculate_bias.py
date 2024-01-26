@@ -3,18 +3,11 @@ import numpy as np
 import pickle
 import pandas as pd 
 
-experiments = [
-'bert_tiny_original'
-                # '1_bert-mini_fairness',
-                # '2_bert-tiny_fairness',
-                # '3_bert-mini_fairness',
-                # '4_bert-tiny_fairness',
-                # '5_bert-mini_fairness',
-                # '6_bert-tiny_fairness',
-                # '7_bert-mini_bias',
-                # '8_bert-tiny_bias',
-                # '9_bert-mini_bias',
-                # '10_bert-tiny_bias'
+experiments = ['minilm_original_2_5_1M_test'
+# 'minilm_original_1M_test',
+#                 'minilm_penalty_1M_test',
+#                 'minilm_penalty+attrloss_pos+attrloss_neg_1M_test',
+#                 'minilm_penalized+attr+adv_1M_test'
                 ]
 
 metrics = ['ARaB']
@@ -26,12 +19,12 @@ for metric in metrics:
     for exp_name in experiments:
         qry_bias_paths[metric][exp_name] = {}
         for _method in methods:
-            qry_bias_paths[metric][exp_name][_method] = '../ARaB/215_scietal_rekabsaz/%s_run_bias_%s_%s.pkl' \
+            qry_bias_paths[metric][exp_name][_method] = '../biases/penalty_disentanglement/%s_run_bias_%s_%s.pkl' \
                                                         % (exp_name, _method, metric)
 
 queries_gender_annotated_path = "../resources/queries_gender_annotated.csv"
 
-at_ranklist = [10, 20, 30, 50, 100]
+at_ranklist = [10, 20]
 
 qry_bias_perqry = {}
 
@@ -97,33 +90,18 @@ for metric in metrics:
 
 print(result)
 # df = pd.DataFrame(result, columns = ["cut_off", "TF", "bert_biased", "bert_mixed_5","bert_mixed_10", "bert_mixed_15", "bert_mixed_20", "bert_mixed_25", "bool","bert_biased", "bert_mixed_5","bert_mixed_10", "bert_mixed_15", "bert_mixed_20", "bert_mixed_25"])  
-df = pd.DataFrame(result, columns = ["cut_off",
-                                     "TF",
+# df = pd.DataFrame(result, columns = ["cut_off",
+#                                      "TF",
 
-'bert_tiny_original',
-                # '1_bert-mini_fairness',
-                # '2_bert-tiny_fairness',
-                # '3_bert-mini_fairness',
-                # '4_bert-tiny_fairness',
-                # '5_bert-mini_fairness',
-                # '6_bert-tiny_fairness',
-                # '7_bert-mini_bias',
-                # '8_bert-tiny_bias',
-                # '9_bert-mini_bias',
-                # '10_bert-tiny_bias',
-                                      "bool",
+# 'minilm_original_1M_test'
+#                 'minilm_penalty_1M_test',
+#                 'minilm_penalty+attrloss_pos+attrloss_neg_1M_test',
+#                 'minilm_penalized+attr+adv_1M_test'
+#                                       "bool",
 
-'bert_tiny_original',
-                # '1_bert-mini_fairness',
-                # '2_bert-tiny_fairness',
-                # '3_bert-mini_fairness',
-                # '4_bert-tiny_fairness',
-                # '5_bert-mini_fairness',
-                # '6_bert-tiny_fairness',
-                # '7_bert-mini_bias',
-                # '8_bert-tiny_bias',
-                # '9_bert-mini_bias',
-                # '10_bert-tiny_bias'
-							            ])
-df.to_csv("../ARaB/215_scietal_rekabsaz/pairwise_experiments.csv")
-
+# 'minilm_original_1M_test'
+#                 'minilm_penalty_1M_test',
+#                 'minilm_penalty+attrloss_pos+attrloss_neg_1M_test',
+#                 'minilm_penalized+attr+adv_1M_test'
+# 							            ])
+# df.to_csv("../ARaB/215_scietal_rekabsaz/pairwise_experiments.csv")
