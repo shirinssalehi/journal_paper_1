@@ -58,8 +58,8 @@ def train(args, model, loss_fn, m_optim, m_scheduler, adv_optim, adv_scheduler, 
         # data_iter = iter(train_loader)
         # batch = data_iter.__next__()
         for step, train_batch in enumerate(tqdm(train_loader)):
-            if step <20:
-                print(train_batch["attribute_pos"])
+            # if step <20:
+            #     print(train_batch["attribute_pos"])
             if args.model == 'bert':
                 if args.task == 'ranking':
                     batch_score_pos, attribute_pos, adv_attribute_pos = model(train_batch['input_ids_pos'].to(device), train_batch['input_mask_pos'].to(device), train_batch['segment_ids_pos'].to(device))
