@@ -4,10 +4,10 @@ import pickle
 
 
 experiments = {
-                'minilm_original_2_5_1M_test': '../reranked/penalty_disentanglement/215_queries/minilm_original_2_5_1M_test.trec',
-                # 'minilm_original_1M_test': '../reranked/penalty_disentanglement/215_queries/minilm_original_1M_test.trec',
-                # 'minilm_penalty_1M_test': '../reranked/penalty_disentanglement/215_queries/minilm_penalty_1M_test.trec',
-                # 'minilm_penalty+attrloss_pos+attrloss_neg_1M_test': '../reranked/penalty_disentanglement/215_queries/minilm_penalty+attrloss_pos+attrloss_neg_1M_test.trec',
+                'minilm_original_200k_5epochs': '../reranked/penalty_disentanglement/215_queries/minilm_original_200k_5epochs.trec',
+                #'minilm_only_disen_without_adv_200k_5epochs': '../reranked/penalty_disentanglement/215_queries/minilm_only_disen_without_adv_200k_5epochs.trec',
+                #'minilm_only_disen_with_adv_without_hloss_200k_5epochs': '../reranked/penalty_disentanglement/215_queries/minilm_only_disen_with_adv_without_hloss_200k_5epochs.trec',
+                #'minilm_only_disen_with_adv_with_hloss_200k_5epochs': '../reranked/penalty_disentanglement/215_queries/minilm_only_disen_with_adv_with_hloss_200k_5epochs.trec'
                 # 'minilm_penalized+attr+adv_1M_test': '../reranked/penalty_disentanglement/215_queries/minilm_penalized+attr+adv_1M_test.trec',
                 # '4_bert-tiny_fairness': '../reranked/215_queries_social_rekabsaz/4_bert-tiny_fairness.trec',
                 # '5_bert-mini_fairness': '../reranked/215_queries_social_rekabsaz/5_bert-mini_fairness.trec',

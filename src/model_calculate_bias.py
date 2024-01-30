@@ -3,10 +3,11 @@ import numpy as np
 import pickle
 import pandas as pd 
 
-experiments = ['minilm_original_2_5_1M_test'
-# 'minilm_original_1M_test',
-#                 'minilm_penalty_1M_test',
-#                 'minilm_penalty+attrloss_pos+attrloss_neg_1M_test',
+experiments = ['minilm_original_1_5_1M_test',
+'minilm_penalty_200k_5epochs',
+'minilm_only_disen_without_adv_200k_5epochs',
+                 #'minilm_only_disen_with_adv_without_hloss_200k_5epochs',
+                # 'minilm_only_disen_with_adv_with_hloss_200k_5epochs'
 #                 'minilm_penalized+attr+adv_1M_test'
                 ]
 

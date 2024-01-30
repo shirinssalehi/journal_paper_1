@@ -2,17 +2,13 @@
 12.2.2021
 Author: Shirin
 """
-# retrieve
-
 # liwc csv
-EXPERIMENT = "run.gov2.bm25+rm3"
-DATASET = "gov2"
-# EXTRACTED_DOCS_FP = "../data/"+DATASET+"/"+EXPERIMENT
+EXPERIMENT = "inference_albert"
 
-# CSV_PATH = "../data/"+DATASET+"/liwc_"+EXPERIMENT+".csv"
-CSV_PATH = "../data/"+DATASET+"/"+"liwc_"+EXPERIMENT
+DICT_PATH = "../../data/liwc"+"collection_bias.pkl"
 
-EXPERIMENT_FP = "../data/"+DATASET+"/"+EXPERIMENT
+EXPERIMENT_FP = "../../data/liwc/"+EXPERIMENT
 # liwc mean for cutoffs
-RESULTS_SAVE_PATH = "../data/"+DATASET+"/liwc/fm_scores_"+EXPERIMENT
+RESULTS_SAVE_PATH = "../../data/liwc/fm_scores_"+EXPERIMENT
+
 

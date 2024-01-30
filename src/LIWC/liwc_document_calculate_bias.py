@@ -7,7 +7,7 @@ from multiprocessing import Pool
 import pandas as pd
 import liwc
 from preprocess import preprocess_gov2
-from configs import CSV_PATH, EXPERIMENT_FP
+from configs import DICT_PATH, EXPERIMENT_FP
 
 
 def tokenize(text):
@@ -22,7 +22,7 @@ def calculate_gendered_count(input_fp):
     :param document:
     :return:
     """
-    parse, _ = liwc.load_token_parser('../data/LIWC2015Dictionary.dic')
+    parse, _ = liwc.load_token_parser('../data/liwc/LIWC2015Dictionary.dic')
     query_df = pd.read_csv(input_fp, names=["qid", "terms", "weight"])
     # df_unbiased = pd.read_csv(UNBIASED_EXPANSION_FP, names=["qid", "terms", "weight"])
     #
@@ -78,7 +78,7 @@ def calculate_doc_score(doc_str, parse):
         male_bias = liwc_counts["male"] / token_counter
     else:
         male_bias = 0
-    return female_bias, male_bias
+    return [female_bias, male_bias, female_bias-male_bias]
 
 
 def calculate_file_score(extracted_docs_fp, csv_path):
@@ -112,7 +112,7 @@ def calculate_liwc_lamdas():
     lamdas = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     for my_lambda in lamdas:
         print(my_lambda)
-        my_csv_path = CSV_PATH + "_" +str(my_lambda)+".csv"
+        my_csv_path = DICT_PATH + "_" +str(my_lambda)+".csv"
         my_docs = EXPERIMENT_FP + "/expanded_landa_{}".format(my_lambda)
         calculate_file_score(my_docs, my_csv_path)
 
@@ -122,7 +122,7 @@ def multiprocess_liwc_lambdas():
     data = []
     for my_lambda in lamdas:
         print(my_lambda)
-        my_csv_path = CSV_PATH + "_" +str(my_lambda)+".csv"
+        my_csv_path = DICT_PATH + "_" +str(my_lambda)+".csv"
         my_docs = EXPERIMENT_FP + "/expanded_landa_{}".format(my_lambda)
         data.append((my_docs, my_csv_path))
     process_pool = Pool(cpu_count())
@@ -146,7 +146,7 @@ def multiprocess_file_score():
 if __name__ == "__main__":
     TIME_START = time.time()
     calculate_liwc_lamdas()
-    calculate_file_score(EXPERIMENT_FP, CSV_PATH)
+    # calculate_file_score(EXPERIMENT_FP, CSV_PATH)
     multiprocess_liwc_lambdas()
     multiprocess_file_score()
     TIME_END = time.time()
