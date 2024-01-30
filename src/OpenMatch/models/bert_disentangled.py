@@ -25,7 +25,7 @@ class Bert(nn.Module):
         if self._task == 'ranking':
             self.pre_ranking = nn.Linear(self.ranking_size, self.ranking_size)
             self._ranking = nn.Linear(self.ranking_size, 1)
-            self.pre_attribute = nn.linear(self.attribute_size, self.attribute_size)
+            self.pre_attribute = nn.Linear(self.attribute_size, self.attribute_size)
             self._attribute = nn.Linear(self.attribute_size, 1)
             self._adv_attribute = nn.Linear(self.ranking_size, 1)
         elif self._task == 'classification':
