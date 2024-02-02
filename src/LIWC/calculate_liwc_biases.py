@@ -41,7 +41,7 @@ def calculate_query_score_cutoff(doc_ids, fm_dictionary):
     query_score = [0, 0, 0]
     for doc_idx in doc_ids:
         # query_score += dictionary[doc_idx]
-        query_score = [(query_score[i] + fm_dictionary[doc_idx][i]) for i in range(len(query_score))]
+        query_score = [(query_score[i] + fm_dictionary[int(doc_idx)][i]) for i in range(len(query_score))]
     query_score = [abs(score/len(doc_ids))*100 for score in query_score]
     return query_score
 
@@ -63,17 +63,18 @@ def calculate_score_cutoff(topn_docs_dict, fm_dictionary):
 
 def write_score_cutoffs(fm_dict, run_file_path, save_path):
     cutoff_list = [10,20]
-    resulting_csv_row = []
-    with open(save_path, "w") as result_file:
-        for cutoff in cutoff_list:
-            print("cutoff = {}".format(cutoff))
-            print("creat topn docs dictionary")
-            topn_docs_dict = find_top_n_docs(run_file_path, cutoff)
-            fm_score = calculate_score_cutoff(topn_docs_dict, fm_dict)
-            resulting_csv_row += [round(fm_score[2], 2), round(fm_score[0], 2),
-                                        round(fm_score[1], 2), round(fm_score[0]-fm_score[1], 2)]
-        writer = csv.writer(result_file)
-        writer.writerow(resulting_csv_row)
+    resulting_csv_row = {}
+    # with open(save_path, "w") as result_file:
+    for cutoff in cutoff_list:
+        print("cutoff = {}".format(cutoff))
+        print("creat topn docs dictionary")
+        topn_docs_dict = find_top_n_docs(run_file_path, cutoff)
+        fm_score = calculate_score_cutoff(topn_docs_dict, fm_dict)
+        resulting_csv_row[cutoff] = [round(fm_score[2], 2), round(fm_score[0], 2),
+                                    round(fm_score[1], 2), round(fm_score[0]-fm_score[1], 2)]
+    print(resulting_csv_row)
+        # writer = csv.writer(result_file)
+        # writer.writerow(resulting_csv_row)
             # log = "cutoff {}-> total score: femail ={}, mail={}, femail - mail ={} \n"\
             #     .format(cutoff, fm_score[0], fm_score[1], fm_score[2])
             # result_file.write(log)
@@ -82,27 +83,28 @@ def write_score_cutoffs(fm_dict, run_file_path, save_path):
 if __name__ == "__main__":
     print("stat creating and saving the fm_dictionary of liwc for all of the collection documents")
     collection_path = "/home/ir-bias/Shirin/msmarco/data/collection.tsv"
-    parse, _ = liwc.load_token_parser('../../data/liwc/LIWC2015Dictionary.dic')
-    # with open(DICT_PATH, "r") as file_to_read:
-    #     documents_bias = pickle.load(file_to_read)
-    documents_bias = {}
-    empty_cnt = 0
-    with open(collection_path) as fr:
-        for i, line in enumerate(fr):
-            if i % 100000 == 0:
-                print(i)
-            vals = line.strip().split('\t')
-            docid = int(vals[0])
-            if len(vals) == 2:
-                _text = vals[1]
-            else:
-                _text = ""
-                empty_cnt += 1
-            documents_bias[docid] = calculate_doc_score(_text, parse)
-    with open(DICT_PATH, 'wb') as file_to_write:
-        pickle.dump(documents_bias, file_to_write)
+    parse, _ = liwc.load_token_parser('/home/ir-bias/Shirin/journal_paper_1/data/liwc/LIWC2015Dictionary.dic')
+    with open(DICT_PATH, "rb") as file_to_read:
+        documents_bias = pickle.load(file_to_read)
+    # documents_bias = {}
+    # empty_cnt = 0
+    # with open(collection_path) as fr:
+    #     for i, line in enumerate(fr):
+    #         if i % 100000 == 0:
+    #             print(i)
+    #         vals = line.strip().split('\t')
+    #         docid = int(vals[0])
+    #         if len(vals) == 2:
+    #             _text = vals[1]
+    #         else:
+    #             _text = ""
+    #             empty_cnt += 1
+    #         documents_bias[docid] = calculate_doc_score(_text, parse)
+    # with open(DICT_PATH, 'wb') as file_to_write:
+    #     pickle.dump(documents_bias, file_to_write)
     
-    run_file_path = EXPERIMENT_FP +".trec"
+    run_file_path = EXPERIMENT_FP
+    print(EXPERIMENT_FP)
     save_path = RESULTS_SAVE_PATH + ".csv"
     write_score_cutoffs(documents_bias, run_file_path, save_path)
     # calculate_total_score_lambdas()

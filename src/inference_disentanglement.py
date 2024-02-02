@@ -6,7 +6,7 @@ import numpy as np
 from transformers import AutoTokenizer
 import OpenMatch as om
 from OpenMatch.data.datasets.my_bert_dataset_disentangled import BertDataset
-from OpenMatch.models.bert_disentangled import Bert
+from OpenMatch.models.bert_disentangled import BertDisentangled
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 
 
@@ -185,7 +185,7 @@ def main():
                 task=args.task
             )
         else:
-            model = Bert(
+            model = BertDisentangled(
                 pretrained=args.pretrain,
                 mode=args.mode,
                 task=args.task

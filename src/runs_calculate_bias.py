@@ -4,7 +4,7 @@ import pickle
 
 
 experiments = {
-                'minilm_original_200k_5epochs': '../reranked/penalty_disentanglement/215_queries/minilm_original_200k_5epochs.trec',
+                'minilm_only_disen_without_adv_pre_ranker_pre_attribute_lr3e-4_200k_5epochs_2': '../reranked/penalty_disentanglement/215_queries/minilm_only_disen_without_adv_pre_ranker_pre_attribute_lr3e-4_200k_5epochs_2.trec',
                 #'minilm_only_disen_without_adv_200k_5epochs': '../reranked/penalty_disentanglement/215_queries/minilm_only_disen_without_adv_200k_5epochs.trec',
                 #'minilm_only_disen_with_adv_without_hloss_200k_5epochs': '../reranked/penalty_disentanglement/215_queries/minilm_only_disen_with_adv_without_hloss_200k_5epochs.trec',
                 #'minilm_only_disen_with_adv_with_hloss_200k_5epochs': '../reranked/penalty_disentanglement/215_queries/minilm_only_disen_with_adv_with_hloss_200k_5epochs.trec'

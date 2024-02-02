@@ -10,7 +10,7 @@ from torch.distributions import Categorical
 import numpy as np
 from transformers import AutoTokenizer, get_linear_schedule_with_warmup
 import OpenMatch as om
-from OpenMatch.models.bert_disentangled import Bert
+from OpenMatch.models.bert_disentangled import BertDisentangled
 from OpenMatch.data.datasets.my_dataset_bias import Dataset
 from OpenMatch.data.datasets.my_bert_dataset_disentangled import BertDataset
 from OpenMatch.data.datasets.my_roberta_dataset_bias import RobertaDataset
@@ -172,29 +172,32 @@ def main():
     parser.add_argument('-model', type=str, default='bert')
     parser.add_argument('-reinfoselect', action='store_true', default=False)
     parser.add_argument('-reset', action='store_true', default=False)
-    parser.add_argument('-train', action=om.utils.DictOrStr, default='./data/train_rank_toy.jsonl')
-    parser.add_argument('-max_input', type=int, default=1280000)
+    parser.add_argument('-train', action=om.utils.DictOrStr, default='../data/bias_dataset_penalty+disentanglement_6M.tsv')
+    parser.add_argument('-max_input', type=int, default=200000)
     parser.add_argument('-save', type=str, default='./checkpoints/bert.bin')
-    parser.add_argument('-dev', action=om.utils.DictOrStr, default='./data/dev_toy.jsonl')
-    parser.add_argument('-qrels', type=str, default='./data/qrels_toy')
+    parser.add_argument('-dev', action=om.utils.DictOrStr, default='../data/dev.100.jsonl')
+    parser.add_argument('-qrels', type=str, default=' ../runs/qrels.dev.tsv')
     parser.add_argument('-vocab', type=str, default='allenai/scibert_scivocab_uncased/vocab.txt')
     parser.add_argument('-ent_vocab', type=str, default='')
     parser.add_argument('-pretrain', type=str, default='allenai/scibert_scivocab_uncased')
     parser.add_argument('-checkpoint', type=str, default=None)
     parser.add_argument('-res', type=str, default='./results/bert.trec')
-    parser.add_argument('-metric', type=str, default='ndcg_cut_10')
+    parser.add_argument('-metric', type=str, default='mrr_cut_10')
     parser.add_argument('-mode', type=str, default='cls')
     parser.add_argument('-n_kernels', type=int, default=21)
     parser.add_argument('-max_query_len', type=int, default=32)
     parser.add_argument('-max_doc_len', type=int, default=221)
     parser.add_argument('-maxp', action='store_true', default=False)
-    parser.add_argument('-epoch', type=int, default=1)
+    parser.add_argument('-epoch', type=int, default=5)
     parser.add_argument('-batch_size', type=int, default=8)
     parser.add_argument('-lr', type=float, default=3e-6)
     parser.add_argument('-tau', type=float, default=1)
     parser.add_argument('-n_warmup_steps', type=int, default=16000)
-    parser.add_argument('-eval_every', type=int, default=10000)
+    parser.add_argument('-eval_every', type=int, default=1000)
     parser.add_argument('-regularizer', type=float, default=1)
+    parser.add_argument('-attribute_dim', type=int, required=True)
+    # parser.add_argument('-hidden_dim', type=int, required=True)
+    parser.add_argument('-optimizer', type=str, required=True)
     # sys.argv = ["my_train_disentangled.py", "-task", "ranking", "-model", "bert", "-train", "/home/ir-bias/Shirin/journal_paper_1/data/bias_dataset_penalty+disentanglement_6M.tsv",
     #             "-dev", "/home/ir-bias/Shirin/journal_paper_1/data/dev.100.jsonl", "-save", "/home/ir-bias/Shirin/journal_paper_1/checkpoints/penalty_disentanglement/", "-qrels", "/home/ir-bias/Shirin/journal_paper_1/runs/qrels.dev.tsv",
     #             "-vocab", "sentence-transformers/msmarco-MiniLM-L6-cos-v5", "-pretrain", "sentence-transformers/msmarco-MiniLM-L6-cos-v5", "-res", "/home/shirin/journal_paper_1/results/penalty_disentanglement/6M_minilm.trec",
@@ -356,10 +359,12 @@ def main():
                 task=args.task
             )
         else:
-            model = Bert(
+            model = BertDisentangled(
                 pretrained=args.pretrain,
                 mode=args.mode,
-                task=args.task
+                task=args.task,
+                attribute_dim=args.attribute_dim,
+                # hidden_dim=args.hidden_dim
             )
         if args.reinfoselect:
             policy = om.models.Bert(
@@ -459,8 +464,13 @@ def main():
         
     # define the optimizers
     m_parameters = [p for p in model._model.parameters()]+[p for p in model._ranking.parameters()]+[p for p in model._attribute.parameters()]
-    # m_optim = torch.optim.Adam(m_parameters, lr=args.lr)
-    m_optim = torch.optim.Adam(filter(lambda p: p.requires_grad, m_parameters), lr=args.lr)
+    if args.optimizer == "adam":
+        m_optim = torch.optim.Adam(filter(lambda p: p.requires_grad, m_parameters), lr=args.lr)
+    elif args.optimizer == "sgd":
+        m_optim = torch.optim.SGD(filter(lambda p: p.requires_grad, m_parameters), lr=args.lr)
+    else:
+        print("optimizer not supported!")
+
     m_scheduler = get_linear_schedule_with_warmup(m_optim, num_warmup_steps=args.n_warmup_steps, num_training_steps=len(train_set)*args.epoch//args.batch_size)
     # adv_parameters = list(model._adv_attribute.parameters())
     adv_parameters = [p for p in model._adv_attribute.parameters()]
@@ -483,7 +493,10 @@ def main():
     else:
         time1 = time.time()
         print("start training")
-        print("regularizer: ", args.regularizer)
+        print("-----checkpoint-----: {}".format(args.checkpoint), "\n",
+                "learning rate: {}".format(args.lr), "\n", "optimizer: {}".format(args.optimizer), "\n", 
+              "gender_dim: {}".format(args.attribute_dim), "\n",
+                "regularizer: {}".format(args.regularizer), "\n", "batch size: {}".format(args.batch_size), "\n")
         train(args, model, loss_fn, m_optim, m_scheduler, adv_optim, adv_scheduler, metric, train_loader, dev_loader, device)
         time2 = time.time()
         print("training time = {}".format(time2-time1))
