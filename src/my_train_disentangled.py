@@ -126,7 +126,7 @@ def train(args, model, loss_fn, m_optim, m_scheduler, adv_optim, adv_scheduler, 
                #  print(entropy_loss(torch.sigmoid(adv_attribute_pos)))
                #  print(entropy_loss(torch.sigmoid(adv_attribute_neg)))
                 # total losses
-                batch_loss = ranking_loss + 0.5*attribute_loss_pos + 0.5*attribute_loss_neg # + 0.001 * hloss_pos + 0.001 * hloss_neg
+                batch_loss = ranking_loss + attribute_loss_pos + attribute_loss_neg # + 0.001 * hloss_pos + 0.001 * hloss_neg
                 # batch_loss_adv = batch_loss_adv_pos + batch_loss_adv_neg
 
             elif args.task == 'classification':
