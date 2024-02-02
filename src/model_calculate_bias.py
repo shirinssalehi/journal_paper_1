@@ -3,7 +3,7 @@ import numpy as np
 import pickle
 import pandas as pd 
 
-experiments = ['minilm_only_disen_without_adv_pre_ranker_pre_attribute_lr3e-4_200k_5epochs_2'
+experiments = ['replicate_disen_adam_3e-4_genderdim100'
                  #'minilm_only_disen_with_adv_without_hloss_200k_5epochs',
                 # 'minilm_only_disen_with_adv_with_hloss_200k_5epochs'
 #                 'minilm_penalized+attr+adv_1M_test'

@@ -109,7 +109,7 @@ def train(args, model, loss_fn, m_optim, m_scheduler, adv_optim, adv_scheduler, 
                     raise ValueError('Task must be `ranking` or `classification`.')
             if args.task == 'ranking':
                 ranking_loss = loss_fn(batch_score_pos.tanh(), batch_score_neg.tanh(), torch.ones(batch_score_pos.size()).to(device))
-                # ranking_loss = bias_regularized_margin_ranking_loss(batch_score_pos.tanh(), batch_score_neg.tanh(),
+                # batch_loss = bias_regularized_margin_ranking_loss(batch_score_pos.tanh(), batch_score_neg.tanh(),
                 #                                                   args.regularizer,
                 #                                                   train_batch["bias_neg"].to(device))
                 # loss_attribute                
@@ -176,7 +176,7 @@ def main():
     parser.add_argument('-max_input', type=int, default=200000)
     parser.add_argument('-save', type=str, default='./checkpoints/bert.bin')
     parser.add_argument('-dev', action=om.utils.DictOrStr, default='../data/dev.100.jsonl')
-    parser.add_argument('-qrels', type=str, default=' ../runs/qrels.dev.tsv')
+    parser.add_argument('-qrels', type=str, default='../runs/qrels.dev.tsv')
     parser.add_argument('-vocab', type=str, default='allenai/scibert_scivocab_uncased/vocab.txt')
     parser.add_argument('-ent_vocab', type=str, default='')
     parser.add_argument('-pretrain', type=str, default='allenai/scibert_scivocab_uncased')
@@ -198,6 +198,7 @@ def main():
     parser.add_argument('-attribute_dim', type=int, required=True)
     # parser.add_argument('-hidden_dim', type=int, required=True)
     parser.add_argument('-optimizer', type=str, required=True)
+    parser.add_argument('-cont_training', type=bool, default=False)
     # sys.argv = ["my_train_disentangled.py", "-task", "ranking", "-model", "bert", "-train", "/home/ir-bias/Shirin/journal_paper_1/data/bias_dataset_penalty+disentanglement_6M.tsv",
     #             "-dev", "/home/ir-bias/Shirin/journal_paper_1/data/dev.100.jsonl", "-save", "/home/ir-bias/Shirin/journal_paper_1/checkpoints/penalty_disentanglement/", "-qrels", "/home/ir-bias/Shirin/journal_paper_1/runs/qrels.dev.tsv",
     #             "-vocab", "sentence-transformers/msmarco-MiniLM-L6-cos-v5", "-pretrain", "sentence-transformers/msmarco-MiniLM-L6-cos-v5", "-res", "/home/shirin/journal_paper_1/results/penalty_disentanglement/6M_minilm.trec",
@@ -366,6 +367,18 @@ def main():
                 attribute_dim=args.attribute_dim,
                 # hidden_dim=args.hidden_dim
             )
+            if args.cont_training:
+                print("****************** continue training the given checkpoint *****************")
+                state_dict = torch.load(args.checkpoint)
+                st = {}
+                for k in state_dict:
+                    if k.startswith('bert'):
+                        st['_model'+k[len('bert'):]] = state_dict[k]
+                    elif k.startswith('classifier'):
+                        st['_dense'+k[len('classifier'):]] = state_dict[k]
+                    else:
+                        st[k] = state_dict[k]
+                model.load_state_dict(st)
         if args.reinfoselect:
             policy = om.models.Bert(
                 pretrained=args.pretrain,
