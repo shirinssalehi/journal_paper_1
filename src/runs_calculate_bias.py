@@ -2,10 +2,10 @@
 import numpy as np
 import pickle
 
-
+my_path = "../biases/penalty_disentanglement/"
 experiments = {
-                'replicate_disen_adam_3e-4_genderdim100': '../reranked/penalty_disentanglement/215_queries/replicate_disen_adam_3e-4_genderdim100.trec',
-                #'minilm_only_disen_without_adv_200k_5epochs': '../reranked/penalty_disentanglement/215_queries/minilm_only_disen_without_adv_200k_5pochs.trec',
+                'exp_17_disen': '../reranked/penalty_disentanglement/215_queries/electra_small/exp_17_disen.trec',
+                # 'exp_3_original_model': '../reranked/penalty_disentanglement/1405_queries/exp_3_original_model.trec',
                 #'minilm_only_disen_with_adv_without_hloss_200k_5epochs': '../reranked/penalty_disentanglement/215_queries/minilm_only_disen_with_adv_without_hloss_200k_5epochs.trec',
                 #'minilm_only_disen_with_adv_with_hloss_200k_5epochs': '../reranked/penalty_disentanglement/215_queries/minilm_only_disen_with_adv_with_hloss_200k_5epochs.trec'
                 # 'minilm_penalized+attr+adv_1M_test': '../reranked/penalty_disentanglement/215_queries/minilm_penalized+attr+adv_1M_test.trec',
@@ -140,7 +140,7 @@ print('done!')
 
 for exp_name in experiments:
     for _method in docs_bias_paths:
-        save_path = "../biases/penalty_disentanglement/%s_run_bias_%s" % (exp_name, _method)
+        save_path = my_path + "%s_run_bias_%s" % (exp_name, _method)
 
         print (save_path)
 

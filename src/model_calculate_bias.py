@@ -3,7 +3,12 @@ import numpy as np
 import pickle
 import pandas as pd 
 
-experiments = ['replicate_disen_adam_3e-4_genderdim100'
+my_path = "../biases/penalty_disentanglement/"
+df = pd.read_csv("../runs/run.215_societal_rekabsaz.dev.tsv", sep = " ", names = ['qid','q0',"docid","r","s","a"])
+# df = pd.read_csv("/home/ir-bias/Shirin/gender_disentanglement/data/target_queries/navid_neutrals/run.neutral_queries.trec", sep = " ", names = ['qid','q0',"docid","r","s","a"])
+# df = pd.read_csv("/home/ir-bias/Shirin/gender_disentanglement/data/target_queries/ecir_neutrals/run.neutral_queries.trec", sep = " ", names = ['qid','q0',"docid","r","s","a"])
+
+experiments = ['exp_17_disen'
                  #'minilm_only_disen_with_adv_without_hloss_200k_5epochs',
                 # 'minilm_only_disen_with_adv_with_hloss_200k_5epochs'
 #                 'minilm_penalized+attr+adv_1M_test'
@@ -18,7 +23,7 @@ for metric in metrics:
     for exp_name in experiments:
         qry_bias_paths[metric][exp_name] = {}
         for _method in methods:
-            qry_bias_paths[metric][exp_name][_method] = '../biases/penalty_disentanglement/%s_run_bias_%s_%s.pkl' \
+            qry_bias_paths[metric][exp_name][_method] = my_path+'%s_run_bias_%s_%s.pkl' \
                                                         % (exp_name, _method, metric)
 
 queries_gender_annotated_path = "../resources/queries_gender_annotated.csv"
@@ -38,7 +43,6 @@ for metric in metrics:
                 qry_bias_perqry[metric][exp_name][_method] = pickle.load(fr)
 
 
-df = pd.read_csv("../runs/run.215_societal_rekabsaz.dev.tsv", sep = " ", names = ['qid','q0',"docid","r","s","a"])
 query_ids = pd.unique(df['qid']).tolist()
 
 eval_results_bias = {}

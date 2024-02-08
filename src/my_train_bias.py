@@ -11,7 +11,7 @@ from transformers import AutoTokenizer, get_linear_schedule_with_warmup
 import OpenMatch as om
 
 from OpenMatch.data.datasets.my_dataset_bias import Dataset
-from OpenMatch.data.datasets.my_bert_dataset_disentangled import BertDataset
+from OpenMatch.data.datasets.my_bert_dataset_bias import BertDataset
 from OpenMatch.data.datasets.my_roberta_dataset_bias import RobertaDataset
 from regularized_loss import bias_regularized_margin_ranking_loss
 
@@ -144,18 +144,18 @@ def main():
     parser.add_argument('-train', action=om.utils.DictOrStr, default='./data/train_rank_toy.jsonl')
     parser.add_argument('-max_input', type=int, default=1280000)
     parser.add_argument('-save', type=str, default='./checkpoints/bert.bin')
-    parser.add_argument('-dev', action=om.utils.DictOrStr, default='./data/dev_toy.jsonl')
-    parser.add_argument('-qrels', type=str, default='./data/qrels_toy')
+    parser.add_argument('-dev', action=om.utils.DictOrStr, default='../data/dev.100.jsonl')
+    parser.add_argument('-qrels', type=str, default='../runs/qrels.dev.tsv')
     parser.add_argument('-vocab', type=str, default='allenai/scibert_scivocab_uncased/vocab.txt')
     parser.add_argument('-ent_vocab', type=str, default='')
     parser.add_argument('-pretrain', type=str, default='allenai/scibert_scivocab_uncased')
     parser.add_argument('-checkpoint', type=str, default=None)
     parser.add_argument('-res', type=str, default='./results/bert.trec')
-    parser.add_argument('-metric', type=str, default='ndcg_cut_10')
+    parser.add_argument('-metric', type=str, default='mrr_cut_10')
     parser.add_argument('-mode', type=str, default='cls')
     parser.add_argument('-n_kernels', type=int, default=21)
-    parser.add_argument('-max_query_len', type=int, default=20)
-    parser.add_argument('-max_doc_len', type=int, default=150)
+    parser.add_argument('-max_query_len', type=int, default=32)
+    parser.add_argument('-max_doc_len', type=int, default=221)
     parser.add_argument('-maxp', action='store_true', default=False)
     parser.add_argument('-epoch', type=int, default=1)
     parser.add_argument('-batch_size', type=int, default=8)

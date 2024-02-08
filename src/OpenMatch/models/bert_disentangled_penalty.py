@@ -1,4 +1,5 @@
 from typing import Tuple
+import OpenMatch as om
 
 import torch
 import torch.nn as nn
@@ -11,7 +12,7 @@ class BertDisentangled(nn.Module):
         pretrained: str,
         mode: str = 'cls',
         task: str = 'ranking',
-        attribute_dim: int = 50,
+        attribute_dim: int = 100,
         # hidden_dim: int = 512
     ) -> None:
         super(BertDisentangled, self).__init__()
@@ -19,29 +20,42 @@ class BertDisentangled(nn.Module):
         self._mode = mode
         self._task = task
 
-        self._config = AutoConfig.from_pretrained(self._pretrained)
-        self._model = AutoModel.from_pretrained(self._pretrained, config=self._config)
+        # self._config = AutoConfig.from_pretrained(self._pretrained)
+        self._model = om.models.Bert(pretrained=self._pretrained)
+        state_dict = torch.load("../checkpoints/penalty_disentanglement/exp_4_penalty.bin")
+        st = {}
+        for k in state_dict:
+            if k.startswith('bert'):
+                st['_model'+k[len('bert'):]] = state_dict[k]
+            elif k.startswith('classifier'):
+                st['_dense'+k[len('classifier'):]] = state_dict[k]
+            else:
+                st[k] = state_dict[k]
+        self._model.load_state_dict(st)
         self.attribute_size = attribute_dim
-        self.ranking_size = self._config.hidden_size - self.attribute_size
-        print(self._config.hidden_size)
+        self.ranking_size = 384 - self.attribute_size
+
         if self._task == 'ranking':
             self.pre_ranking = nn.Linear(self.ranking_size, self.ranking_size)
             self._ranking = nn.Linear(self.ranking_size, 1)
             self.pre_attribute = nn.Linear(self.attribute_size, self.attribute_size)
             self._attribute = nn.Linear(self.attribute_size, 1)
             self._adv_attribute = nn.Linear(self.ranking_size, 1)
-            # self.dropout_ranker = nn.Dropout(p=0.1)
-            # self.dropout_classifier = nn.Dropout(p=0.1)
+            self.dropout_ranker = nn.Dropout(p=0.1)
+            self.dropout_classifier = nn.Dropout(p=0.1)
         elif self._task == 'classification':
-            self._ranking = nn.Linear(self._config.hidden_size, 2)
+            self._ranking = nn.Linear(384, 2)
         else:
             raise ValueError('Task must be `ranking` or `classification`.')
 
     def forward(self, input_ids: torch.Tensor, input_mask: torch.Tensor = None, segment_ids: torch.Tensor = None) -> Tuple[torch.Tensor, torch.Tensor]:
-        output = self._model(input_ids, attention_mask = input_mask, token_type_ids = segment_ids)
+        _, output = self._model(input_ids, input_mask, segment_ids)
         if self._mode == 'cls':
-            ranking_logits = output[0][:, 0, :self.ranking_size]
-            attribute_logits = output[0][:, 0, self.ranking_size:]
+            ranking_logits = output[:, :self.ranking_size]
+            attribute_logits = output[:, self.ranking_size:]
+            # print(output.size())
+            # print(ranking_logits.size())
+            # print(attribute_logits.size())
         elif self._mode == 'pooling':
             logits = output[1]
         else:
